@@ -8,24 +8,24 @@ using namespace axml;
 size_t StringPool::decodeLength(const uint8_t* t, size_t len, size_t& size) {
     assertSize(len >= 1);
     size_t ret = t[0];
-    size = 1;
     if (ret & 0x80) {
         assertSize(len >= 2);
         ret = ((ret & 0x7F) << 8) | t[1];
-        size = 2;
+        ++size;
     }
+    ++size;
     return ret;
 }
 
 size_t StringPool::decodeLength(const uint16_t* t, size_t len, size_t& size) {
     assertSize(len >= 1 * sizeof(uint16_t));
     size_t ret = t[0];
-    size = 1;
     if (ret & 0x8000) {
         assertSize(len >= 2 * sizeof(uint16_t));
         ret = ((ret & 0x7FFF) << 16) | t[1];
-        size = 2;
+        ++size;
     }
+    ++size;
     return ret;
 }
 
@@ -34,13 +34,14 @@ std::string StringPool::getStringAtOffset(size_t offset) const {
     assertSize(offset < header->size);
     if (utf8) {
         uint8_t* ptr = (uint8_t*) ((size_t) (void*) header + header->stringsStart + offset);
-        size_t lenSize;
-        size_t size = decodeLength(ptr, header->size - offset, lenSize);
-        assertSize(offset + size + lenSize <= header->size);
-        return std::string((char*) &ptr[lenSize], size);
+        size_t lenSize = 0;
+        size_t u16len = decodeLength(&ptr[lenSize], header->size - offset, lenSize);
+        size_t u8len = decodeLength(&ptr[lenSize], header->size - offset, lenSize);
+        assertSize(offset + u8len + lenSize <= header->size);
+        return std::string((char*) &ptr[lenSize], u8len);
     } else {
         uint16_t* ptr = (uint16_t*) ((size_t) (void*) header + header->stringsStart + offset);
-        size_t lenSize;
+        size_t lenSize = 0;
         size_t size = decodeLength(ptr, header->size - offset, lenSize);
         assertSize(offset + (size + lenSize) * sizeof(uint16_t) <= header->size);
         std::u16string str((char16_t*) &ptr[lenSize], size);

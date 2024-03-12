@@ -9,8 +9,10 @@ class AXMLParser {
 
 public:
     enum EventType {
-        START_NAMESPACE, END_NAMESPACE,
-        START_ELEMENT, END_ELEMENT
+        START_NAMESPACE, 
+        END_NAMESPACE,
+        START_ELEMENT, 
+        END_ELEMENT
     };
 
 private:
@@ -32,6 +34,7 @@ private:
     StringPool& stringPool;
     ChunkHeaderRange::Iterator rangeIt;
     bool firstEl = true;
+    bool endns = false;
 
     EventType evType;
 
